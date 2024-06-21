@@ -1,0 +1,14 @@
+README.md
+setup.py
+magic_profanity/__init__.py
+magic_profanity/constants.py
+magic_profanity/magic_profanity.py
+magic_profanity/unicode.json
+magic_profanity/utils.py
+magic_profanity/variant.py
+magic_profanity/wordlist.txt
+magic_profanity.egg-info/PKG-INFO
+magic_profanity.egg-info/SOURCES.txt
+magic_profanity.egg-info/dependency_links.txt
+magic_profanity.egg-info/top_level.txt
+test/test_magic_profanity.py
