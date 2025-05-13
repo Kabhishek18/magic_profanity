@@ -24,6 +24,9 @@ setuptools.setup(
     keywords='profanity-filter censorship text-processing',
     packages=find_packages(),
     python_requires='>=3.9',
+    install_requires=[
+        'nltk>=3.6.0',  # For sentiment analysis
+    ],
     data_files=[
         ("wordlist", ["magic_profanity/wordlist.txt"]),
         ("unicode_characters", ["magic_profanity/unicode.json"]),

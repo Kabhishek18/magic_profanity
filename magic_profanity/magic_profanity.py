@@ -7,9 +7,12 @@ from .utils import (
     read_wordlist,
 )
 from .variant import VariantString
+from .sentiment import SentimentAnalyzer
+from .enhancement import TextEnhancer
 
 class ProfanityFilter:
-    def __init__(self, words=None):
+    def __init__(self, words=None, enable_sentiment=False, sentiment_options=None,
+                 enable_enhancement=False):
         if words is not None and not isinstance(words, (str, Iterable)):
             raise TypeError("Words must be of type str, Iterable, or None")
         
@@ -45,11 +48,21 @@ class ProfanityFilter:
         self.max_num_combinations = 1
         self.allowed_characters = ALLOWED_CHARACTERS
         self.default_wordlist_filename = get_complete_path_of_file("wordlist.txt")
-        
+
         if isinstance(words, str):
             self.load_words_from_file(words)
         else:
             self.load_words(words)
+
+        self.enable_sentiment = enable_sentiment
+        sentiment_options = sentiment_options or {}
+        self.sentiment_analyzer = SentimentAnalyzer(**sentiment_options) if enable_sentiment else None
+
+        # Add text enhancer
+        self.enable_enhancement = enable_enhancement
+        self.text_enhancer = TextEnhancer() if enable_enhancement else None
+
+
 
     def censor_text(self, text, censor_char="*"):
         if not self.censor_wordset:
@@ -179,3 +192,28 @@ class ProfanityFilter:
             words.extend(self._get_upcoming_words(text, end_index, num_of_next_words - 1))
 
         return words
+
+    def analyze_text(self, text, censor_char="*", detailed=False):
+        censored = self.censor_text(text, censor_char)
+        contains_profanity = censored != text
+
+        result = {
+            'censored_text': censored,
+            'contains_profanity': contains_profanity
+        }
+
+        # Add sentiment analysis if enabled
+        if self.enable_sentiment and self.sentiment_analyzer:
+            if detailed:
+                result['sentiment'] = self.sentiment_analyzer.get_detailed_analysis(text)
+            else:
+                result['sentiment'] = {
+                    'classification': self.sentiment_analyzer.get_sentiment(text),
+                    'scores': self.sentiment_analyzer.analyze(text)
+                }
+
+        # Add enhancement suggestions if enabled
+        if self.enable_enhancement and self.text_enhancer:
+            result['enhancement_suggestions'] = self.text_enhancer.suggest_improvements(text)
+
+        return result
