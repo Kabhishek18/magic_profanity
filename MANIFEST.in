@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+include magic_profanity/wordlist.txt
+include magic_profanity/unicode.json

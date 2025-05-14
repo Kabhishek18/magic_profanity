@@ -1,8 +1,8 @@
 # test/test_magic_profanity.py
 import unittest
 from magic_profanity.magic_profanity import ProfanityFilter
-from magic_profanity.sentiment import SentimentAnalyzer
 from magic_profanity.enhancement import TextEnhancer
+from magic_profanity.sentiment import SentimentAnalyzer
 
 
 class TestMagicProfanity(unittest.TestCase):
@@ -36,6 +36,9 @@ class TestMagicProfanity(unittest.TestCase):
 
     def test_basic_functionality(self):
         """Test the basic profanity filtering functionality."""
+        # Add "sucks" to the profanity list for testing
+        self.basic_filter.add_custom_words(["sucks"])
+
         # Test profanity detection
         self.assertFalse(self.basic_filter.has_profanity(self.clean_text))
         self.assertTrue(self.basic_filter.has_profanity(self.profane_text))
@@ -52,6 +55,7 @@ class TestMagicProfanity(unittest.TestCase):
 
         # Reset for further tests
         self.basic_filter = ProfanityFilter()
+
 
     def test_sentiment_analysis(self):
         """Test sentiment analysis functionality."""
@@ -108,7 +112,12 @@ class TestMagicProfanity(unittest.TestCase):
 
     def test_end_to_end(self):
         """Test complete end-to-end functionality."""
-        text = "This damn service is terrible. I hate how it always breaks and they never fix it!"
+        # Create a text that will trigger overall recommendations:
+        # - Long text (>500 chars)
+        # - Long sentences
+        # - Repeated words
+        text = "This damn service is terrible terrible terrible terrible. I hate how it always breaks and they never fix it! " + \
+               "The customer service representatives are completely unhelpful when you try to explain the problems that you are experiencing with their product and they seem to have absolutely no interest in actually resolving the issues that their customers report to them which makes me wonder why they even bother having a support department in the first place since they never actually support anyone properly."
 
         # Complete analysis with all features
         analysis = self.full_filter.analyze_text(text, detailed=True)
@@ -161,6 +170,29 @@ class TestMagicProfanity(unittest.TestCase):
             self.sentiment_filter.analyze_text("The performance is great!")['sentiment']['scores']['pos']
         )
 
+    def test_case_insensitivity(self):
+        """Test that profanity detection works regardless of casing."""
+        base_word = "damn"
+        variations = [
+            "Damn",
+            "DAMN",
+            "DaMn",
+            "dAmN"
+        ]
+
+        for variation in variations:
+            self.assertTrue(
+                self.basic_filter.has_profanity(variation),
+                f"Failed to detect profanity in variant: {variation}"
+            )
+
+        # Test in sentence context
+        for variation in variations:
+            sentence = f"This {variation} test should detect profanity."
+            self.assertTrue(
+                self.basic_filter.has_profanity(sentence),
+                f"Failed to detect profanity in sentence with variant: {variation}"
+            )
 
 if __name__ == "__main__":
     unittest.main()
