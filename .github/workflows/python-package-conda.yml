@@ -6,13 +6,16 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  # This silences the Node.js deprecation warnings you're seeing
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # Added 3.12 as it's now standard for 2024/2025
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
@@ -25,24 +28,27 @@ jobs:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         activate-environment: magic-env
-        auto-activate-base: false
+        # Updated from 'auto-activate-base' to 'auto-activate' to fix warning
+        auto-activate: true 
+        channels: conda-forge,defaults
 
     - name: Install dependencies
-      # The 'shell: bash -el {0}' is required to activate conda in every step
       shell: bash -el {0}
       run: |
-        conda install flake8 pytest
-        # Install the package in editable mode to ensure local imports work
+        # Using conda-forge for faster/more reliable installs
+        conda install -c conda-forge flake8 pytest
+        
+        # Install the package and its requirements
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
-        # If your project uses NLTK (as mentioned in your description), download data
+        
+        # Essential for magic_profanity's sentiment features
         python -c "import nltk; nltk.download('vader_lexicon'); nltk.download('punkt')"
 
     - name: Lint with flake8
       shell: bash -el {0}
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
